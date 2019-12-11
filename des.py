@@ -9,16 +9,20 @@ def string_to_bits(data, type):
     type: 0 解密
     """
     if type == 1:
-        num_code = list(bytes(data, encoding='utf-8'))
+        char_list = list(data)
+        num_code = list(ord(x) for x in char_list)
+        print(num_code)
         res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
-        append_0 = 64 - (len(res) % 64) 
-        if append_0 != 0:        #不够64bit,补0.
-            for _ in range(append_0):
+        temp = len(res) % 64 
+        if temp != 0:        #不够64bit,补0.
+            for _ in range(64 - temp):
                 res.append('0')
         return res
     elif type == 0:
         char_list = list(data)
-        res = ''.join([bin(ord(x))[2:].zfill(8) for x in char_list])
+        num_code = list(ord(x) for x in char_list)
+        print(num_code)
+        res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
         return res
 
 def bits_to_string(data, type):
@@ -29,16 +33,17 @@ def bits_to_string(data, type):
     """
     if type == 1:
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
+        print(temp)
         res = ''.join([chr(x) for x in temp])
-        # res = str(bytes(temp), encoding='utf-8', errors='replace')
         return res
     elif type == 0:
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
+        print(temp)
         for ind in range(len(temp)-1, -1, -1):  #去掉补上的0.
             if temp[ind] == 0 and temp[ind-1] == 0:
                 temp.pop(-1)
         temp.pop(-1)
-        res = str(bytes(temp), encoding='utf-8')
+        res = ''.join([chr(x) for x in temp])
         return res
 
 def text_slice(text):
