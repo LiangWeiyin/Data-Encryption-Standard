@@ -11,7 +11,6 @@ def string_to_bits(data, type):
     if type == 1:
         char_list = list(data)
         num_code = list(ord(x) for x in char_list)
-        print(num_code)
         res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
         temp = len(res) % 64 
         if temp != 0:        #不够64bit,补0.
@@ -21,7 +20,6 @@ def string_to_bits(data, type):
     elif type == 0:
         char_list = list(data)
         num_code = list(ord(x) for x in char_list)
-        print(num_code)
         res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
         return res
 
@@ -33,16 +31,14 @@ def bits_to_string(data, type):
     """
     if type == 1:
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
-        print(temp)
         res = ''.join([chr(x) for x in temp])
         return res
     elif type == 0:
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
-        print(temp)
-        for ind in range(len(temp)-1, -1, -1):  #去掉补上的0.
-            if temp[ind] == 0 and temp[ind-1] == 0:
-                temp.pop(-1)
-        temp.pop(-1)
+        while(temp[-1] == 0 and temp[-2] == 0):
+            temp.pop(-1)
+        if temp[-1] == 0:
+            temp.pop(-1)
         res = ''.join([chr(x) for x in temp])
         return res
 
@@ -113,31 +109,53 @@ def round(subkeys, block):
         left_block = temp
     return right_block + left_block
 
-def encryption(text, key):
+def encryption(text, key, mod='ECB', iv=''):
     #加密
     res = []
     bits = string_to_bits(text, type=1)
     group_text = text_slice(bits)
     subkeys = gen_subkeys(key)
-    for block in group_text:
-        permu_text = permutation(block, INITIAL_PERMUTATION)
-        round_end = round(subkeys, permu_text)
-        final_permu_text = permutation(round_end, FINAL_PERMUTATION)
-        res.extend(final_permu_text)
-    ciphertext = bits_to_string(res, type=1)
-    return ciphertext
+    if mod == 'ECB':
+        for block in group_text:
+            permu_text = permutation(block, INITIAL_PERMUTATION)
+            round_end = round(subkeys, permu_text)
+            final_permu_text = permutation(round_end, FINAL_PERMUTATION)
+            res.extend(final_permu_text)
+        ciphertext = bits_to_string(res, type=1)
+        return ciphertext
+    elif mod == 'CBC':
+        for block in group_text:
+            xor_block = xor(block, iv)
+            permu_text = permutation(xor_block, INITIAL_PERMUTATION)
+            round_end = round(subkeys, permu_text)
+            final_permu_text = permutation(round_end, FINAL_PERMUTATION)
+            res.extend(final_permu_text)
+            iv = final_permu_text
+        ciphertext = bits_to_string(res, type=1)
+        return ciphertext
 
-def decryption(text, key):
+def decryption(text, key, mod='ECB', iv=''):
     #解密
     res = []
     bits = string_to_bits(text, type=0)
     group_text = text_slice(bits)
     subkeys = gen_subkeys(key)
     subkeys.reverse()  #调换子密钥顺序
-    for block in group_text:
-        permu_text = permutation(block, INITIAL_PERMUTATION)
-        round_end = round(subkeys, permu_text)
-        final_permu_text = permutation(round_end, FINAL_PERMUTATION)
-        res.extend(final_permu_text)
-    plaintext = bits_to_string(res, type=0)
-    return plaintext
+    if mod == 'ECB':
+        for block in group_text:
+            permu_text = permutation(block, INITIAL_PERMUTATION)
+            round_end = round(subkeys, permu_text)
+            final_permu_text = permutation(round_end, FINAL_PERMUTATION)
+            res.extend(final_permu_text)
+        plaintext = bits_to_string(res, type=0)
+        return plaintext
+    if mod == 'CBC':
+        for block in group_text:
+            permu_text = permutation(block, INITIAL_PERMUTATION)
+            round_end = round(subkeys, permu_text)
+            final_permu_text = permutation(round_end, FINAL_PERMUTATION)
+            xor_block = xor(final_permu_text, iv)
+            res.extend(xor_block)
+            iv = block
+        plaintext = bits_to_string(res, type=0)
+        return plaintext
