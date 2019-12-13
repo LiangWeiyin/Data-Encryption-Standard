@@ -9,18 +9,18 @@ def string_to_bits(data, type):
     type: 0 解密
     """
     if type == 1:
-        char_list = list(data)
-        num_code = list(ord(x) for x in char_list)
-        res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
+        bytes_list = bytes(data, encoding='utf-8')
+        res = list(''.join(bin(x)[2:].zfill(8) for x in bytes_list))
         temp = len(res) % 64 
         if temp != 0:        #不够64bit,补0.
             for _ in range(64 - temp):
                 res.append('0')
         return res
+
     elif type == 0:
         char_list = list(data)
-        num_code = list(ord(x) for x in char_list)
-        res = list(''.join(bin(x)[2:].zfill(8) for x in num_code))
+        temp = [bin(int(x, 16))[2:].zfill(4) for x  in char_list]
+        res = ''.join(temp)
         return res
 
 def bits_to_string(data, type):
@@ -30,16 +30,16 @@ def bits_to_string(data, type):
     type: 0 解密
     """
     if type == 1:
-        temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
-        res = ''.join([chr(x) for x in temp])
+        temp = [hex(int(''.join(data[ind:ind+4]), 2))[2:] for ind  in range(0, len(data), 4)]
+        res = ''.join(temp)
         return res
     elif type == 0:
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
-        while(temp[-1] == 0 and temp[-2] == 0):
+        while(temp[-1] == '0' and temp[-2] == '0'): #去掉补上的0
             temp.pop(-1)
-        if temp[-1] == 0:
+        if temp[-1] == '0':
             temp.pop(-1)
-        res = ''.join([chr(x) for x in temp])
+        res = bytes(temp).decode('utf-8')
         return res
 
 def text_slice(text):
@@ -49,7 +49,7 @@ def text_slice(text):
 def permutation(s, matrix):
     # 矩阵置换
     res = []
-    for ind, val in enumerate(matrix):
+    for val in matrix:
         res.append(s[val-1])
     return res
 
@@ -74,7 +74,7 @@ def gen_subkeys(key):
 
 def left_shift(s, num):
     # 循环左移
-    return s[num+1:] + s[:num+1]
+    return s[num:] + s[:num]
 
 def xor(s1, s2):
     # 异或
@@ -95,7 +95,7 @@ def sbox_fuction(right_bolck, subkey):
     for ind, val in enumerate(text_for_sbox):
         s_row = int(''.join([val[0], val[-1]]), 2)
         s_column = int(''.join(val[1:-1]), 2)
-        temp = list(bin(SBOXES[ind][s_row][s_column])[2:].zfill(8))
+        temp = list(bin(SBOXES[ind][s_row][s_column])[2:].zfill(4))
         res.extend(temp)
     return permutation(res, PERMUTATION)
 
