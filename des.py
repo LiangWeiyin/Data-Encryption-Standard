@@ -34,11 +34,11 @@ def bits_to_string(data, type):
         res = ''.join(temp)
         return res
     elif type == 0:
+        while(data[-1] == '0' and data[-2] == '0'): #去掉补上的0
+            data.pop(-1)
+        if data[-1] == '0':
+            data.pop(-1)
         temp = [int(''.join(data[ind:ind+8]), 2) for ind  in range(0, len(data), 8)]
-        while(temp[-1] == '0' and temp[-2] == '0'): #去掉补上的0
-            temp.pop(-1)
-        if temp[-1] == '0':
-            temp.pop(-1)
         res = bytes(temp).decode('utf-8')
         return res
 
